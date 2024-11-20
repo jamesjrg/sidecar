@@ -7,6 +7,7 @@ use axum::routing::get;
 use axum::Extension;
 use clap::Parser;
 use sidecar::application::{application::Application, config::configuration::Configuration};
+use sidecar::webserver;
 use std::net::SocketAddr;
 use tokio::signal;
 use tokio::sync::oneshot;
@@ -149,12 +150,12 @@ pub async fn start(app: Application) -> anyhow::Result<()> {
 
     // no middleware check
     let public_routes = Router::new()
-        .route("/config", get(sidecar::webserver::config::get))
+        .route("/config", get(webserver::config::get))
         .route(
             "/reach_the_devs",
-            get(sidecar::webserver::config::reach_the_devs),
+            get(webserver::config::reach_the_devs),
         )
-        .route("/version", get(sidecar::webserver::config::version))
+        .route("/version", get(webserver::config::version))
         .nest("/in_editor", in_editor_router())
         .nest("/tree_sitter", tree_sitter_router())
         .nest("/file", file_operations_router());
@@ -162,7 +163,7 @@ pub async fn start(app: Application) -> anyhow::Result<()> {
     // both protected and public merged into api
     let mut api = Router::new().merge(protected_routes).merge(public_routes);
 
-    api = api.route("/health", get(sidecar::webserver::health::health));
+    api = api.route("/health", get(webserver::health::health));
 
     let api = api
         .layer(Extension(app.clone()))
@@ -197,47 +198,47 @@ fn agentic_router() -> Router {
     Router::new()
         .route(
             "/probe_request_stop",
-            post(sidecar::webserver::agentic::probe_request_stop),
+            post(webserver::agentic::probe_request_stop),
         )
         .route(
             "/code_sculpting_followup",
-            post(sidecar::webserver::agentic::code_sculpting),
+            post(webserver::agentic::code_sculpting),
         )
         .route(
             "/code_sculpting_heal",
-            post(sidecar::webserver::agentic::code_sculpting_heal),
+            post(webserver::agentic::code_sculpting_heal),
         )
         // route for push events coming from the editor
         .route(
             "/diagnostics",
-            post(sidecar::webserver::agentic::push_diagnostics),
+            post(webserver::agentic::push_diagnostics),
         )
         // SWE bench route
         // This route is for software engineering benchmarking
-        .route("/swe_bench", get(sidecar::webserver::agentic::swe_bench))
+        .route("/swe_bench", get(webserver::agentic::swe_bench))
         .route(
             "/agent_session_chat",
-            post(sidecar::webserver::agentic::agent_session_chat),
+            post(webserver::agentic::agent_session_chat),
         )
         .route(
             "/agent_session_edit_anchored",
-            post(sidecar::webserver::agentic::agent_session_edit_anchored),
+            post(webserver::agentic::agent_session_edit_anchored),
         )
         .route(
             "/agent_session_edit_agentic",
-            post(sidecar::webserver::agentic::agent_session_edit_agentic),
+            post(webserver::agentic::agent_session_edit_agentic),
         )
         .route(
             "/agent_session_plan",
-            post(sidecar::webserver::agentic::agent_session_plan),
+            post(webserver::agentic::agent_session_plan),
         )
         .route(
             "/agent_session_plan_iterate",
-            post(sidecar::webserver::agentic::agent_session_plan_iterate),
+            post(webserver::agentic::agent_session_plan_iterate),
         )
         .route(
             "/agent_tool_use",
-            post(sidecar::webserver::agentic::agent_tool_use),
+            post(webserver::agentic::agent_tool_use),
         )
         .route(
             "/verify_model_config",
@@ -245,15 +246,15 @@ fn agentic_router() -> Router {
         )
         .route(
             "/cancel_running_event",
-            post(sidecar::webserver::agentic::cancel_running_exchange),
+            post(webserver::agentic::cancel_running_exchange),
         )
         .route(
             "/user_feedback_on_exchange",
-            post(sidecar::webserver::agentic::user_feedback_on_exchange),
+            post(webserver::agentic::user_feedback_on_exchange),
         )
         .route(
             "/user_handle_session_undo",
-            post(sidecar::webserver::agentic::handle_session_undo),
+            post(webserver::agentic::handle_session_undo),
         )
 }
 
@@ -262,16 +263,16 @@ fn agent_router() -> Router {
     Router::new()
         .route(
             "/search_agent",
-            get(sidecar::webserver::agent::search_agent),
+            get(webserver::agent::search_agent),
         )
         .route(
             "/hybrid_search",
-            get(sidecar::webserver::agent::hybrid_search),
+            get(webserver::agent::hybrid_search),
         )
-        .route("/explain", get(sidecar::webserver::agent::explain))
+        .route("/explain", get(webserver::agent::explain))
         .route(
             "/followup_chat",
-            post(sidecar::webserver::agent::followup_chat),
+            post(webserver::agent::followup_chat),
         )
 }
 
@@ -279,7 +280,7 @@ fn in_editor_router() -> Router {
     use axum::routing::*;
     Router::new().route(
         "/answer",
-        post(sidecar::webserver::in_line_agent::reply_to_user),
+        post(webserver::in_line_agent::reply_to_user),
     )
 }
 
@@ -288,25 +289,25 @@ fn tree_sitter_router() -> Router {
     Router::new()
         .route(
             "/documentation_parsing",
-            post(sidecar::webserver::tree_sitter::extract_documentation_strings),
+            post(webserver::tree_sitter::extract_documentation_strings),
         )
         .route(
             "/diagnostic_parsing",
-            post(sidecar::webserver::tree_sitter::extract_diagnostics_range),
+            post(webserver::tree_sitter::extract_diagnostics_range),
         )
         .route(
             "/tree_sitter_valid",
-            post(sidecar::webserver::tree_sitter::tree_sitter_node_check),
+            post(webserver::tree_sitter::tree_sitter_node_check),
         )
         .route(
             "/valid_xml",
-            post(sidecar::webserver::tree_sitter::check_valid_xml),
+            post(webserver::tree_sitter::check_valid_xml),
         )
 }
 
 fn file_operations_router() -> Router {
     use axum::routing::*;
-    Router::new().route("/edit_file", post(sidecar::webserver::file_edit::file_edit))
+    Router::new().route("/edit_file", post(webserver::file_edit::file_edit))
 }
 
 fn inline_completion() -> Router {
@@ -314,30 +315,30 @@ fn inline_completion() -> Router {
     Router::new()
         .route(
             "/inline_completion",
-            post(sidecar::webserver::inline_completion::inline_completion),
+            post(webserver::inline_completion::inline_completion),
         )
         .route(
             "/cancel_inline_completion",
-            post(sidecar::webserver::inline_completion::cancel_inline_completion),
+            post(webserver::inline_completion::cancel_inline_completion),
         )
         .route(
             "/document_open",
-            post(sidecar::webserver::inline_completion::inline_document_open),
+            post(webserver::inline_completion::inline_document_open),
         )
         .route(
             "/document_content_changed",
-            post(sidecar::webserver::inline_completion::inline_completion_file_content_change),
+            post(webserver::inline_completion::inline_completion_file_content_change),
         )
         .route(
             "/get_document_content",
-            post(sidecar::webserver::inline_completion::inline_completion_file_content),
+            post(webserver::inline_completion::inline_completion_file_content),
         )
         .route(
             "/get_identifier_nodes",
-            post(sidecar::webserver::inline_completion::get_identifier_nodes),
+            post(webserver::inline_completion::get_identifier_nodes),
         )
         .route(
             "/get_symbol_history",
-            post(sidecar::webserver::inline_completion::symbol_history),
+            post(webserver::inline_completion::symbol_history),
         )
 }
