@@ -174,11 +174,10 @@ pub async fn start(app: Application) -> anyhow::Result<()> {
         // I want to set the bytes limit here to 20 MB
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024));
 
-    let router = Router::new().nest("/api", api);
 
-    axum::Server::bind(&bind)
-        .serve(router.into_make_service())
-        .await?;
+    let router = Router::new().nest("/api", api);
+    let listener = tokio::net::TcpListener::bind(&bind).await?;
+    axum::serve(listener, router.into_make_service()).await?;
 
     Ok(())
 }
