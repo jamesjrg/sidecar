@@ -168,7 +168,6 @@ pub async fn start(app: Application) -> anyhow::Result<()> {
     let api = api
         .layer(Extension(app.clone()))
         .with_state(app.clone())
-        .with_state(app.clone())
         .layer(CorsLayer::permissive())
         .layer(CatchPanicLayer::new())
         // I want to set the bytes limit here to 20 MB
