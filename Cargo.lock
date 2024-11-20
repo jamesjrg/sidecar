@@ -4557,6 +4557,7 @@ dependencies = [
  "git-version",
  "gix",
  "globset",
+ "http-body-util",
  "ignore",
  "lazy_static",
  "llm_client",

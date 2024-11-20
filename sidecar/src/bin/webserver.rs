@@ -14,12 +14,6 @@ use tokio::sync::oneshot;
 use tower_http::{catch_panic::CatchPanicLayer, cors::CorsLayer};
 use tracing::{debug, error, info};
 
-use axum::http::header::AUTHORIZATION;
-use axum::{
-    http::{Request, StatusCode},
-    middleware::Next,
-    response::Response,
-};
 pub type Router<S = Application> = axum::Router<S>;
 
 #[tokio::main]
@@ -79,60 +73,6 @@ pub async fn run(application: Application) -> Result<()> {
     Ok(())
 }
 
-// reintroduce when necessary
-async fn _auth_middleware<B>(request: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
-    // Get token from Authorization header
-    let auth_header = request
-        .headers()
-        .get(AUTHORIZATION)
-        .and_then(|header| header.to_str().ok());
-
-    dbg!(&auth_header);
-
-    match auth_header {
-        Some(token) => {
-            // Check if token starts with "Bearer "
-            if let Some(token) = token.strip_prefix("Bearer ") {
-                // Validate token here
-                if _is_valid_token(token).await {
-                    Ok(next.run(request).await)
-                } else {
-                    Err(StatusCode::UNAUTHORIZED)
-                }
-            } else {
-                Err(StatusCode::UNAUTHORIZED)
-            }
-        }
-        None => Err(StatusCode::UNAUTHORIZED),
-    }
-}
-
-// Token validation function (implement your own logic)
-async fn _is_valid_token(token: &str) -> bool {
-    println!("webserver::is_valid_token::token({})", token);
-
-    match _validate_workos_token(token).await {
-        Ok(_) => true,
-        Err(_) => false,
-    }
-}
-
-async fn _validate_workos_token(token: &str) -> Result<bool> {
-    let client = reqwest::Client::new();
-
-    let auth_proxy_endpoint = "";
-
-    let response = client
-        .get(auth_proxy_endpoint)
-        .header("Authorization", format!("Bearer {}", token))
-        .send()
-        .await?;
-
-    dbg!(&response);
-
-    Ok(response.status().is_success())
-}
-
 // TODO(skcd): Add routes here which can do the following:
 // - when a file changes, it should still be logged and tracked
 // - when a file is opened, it should be tracked over here too
@@ -173,6 +113,8 @@ pub async fn start(app: Application) -> anyhow::Result<()> {
         // I want to set the bytes limit here to 20 MB
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024));
 
+    #[cfg(feature = "print_request_response")]
+    let api = api.layer(axum::middleware::from_fn(webserver::middleware::print_request_response));
 
     let router = Router::new().nest("/api", api);
     let listener = tokio::net::TcpListener::bind(&bind).await?;
