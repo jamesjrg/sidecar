@@ -8,6 +8,7 @@ build = "build.rs"
 
 [features]
 ee = []
+print_request_response = []
 
 [dependencies]
 async-trait = "0.1.77"
@@ -99,6 +100,7 @@ console-subscriber = "0.4.1"
 similar = "2.6.0"
 globset = "0.4.15"
 dirs = "5.0.1"
+http-body-util = "0.1.2"
 
 [target.'cfg(unix)'.dependencies]
 nix = { version = "0.26.2", default-features = false, features = [ "resource" ] }
