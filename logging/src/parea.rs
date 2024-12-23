@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use crate::reqwest_tee_middleware::new_tee_client;
+
 #[derive(Clone)]
 pub struct PareaClient {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -86,7 +88,7 @@ impl PareaLogCompletion {
 impl PareaClient {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
         }
     }
 

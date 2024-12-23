@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use logging::reqwest_tee_middleware::new_tee_client;
 
 use crate::agentic::tool::{
     errors::ToolError,
@@ -8,7 +9,7 @@ use crate::agentic::tool::{
 };
 
 pub struct TerminalTool {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -96,7 +97,7 @@ impl TerminalOutput {
 impl TerminalTool {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
         }
     }
 }

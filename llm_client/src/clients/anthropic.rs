@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use eventsource_stream::Eventsource;
 use futures::StreamExt;
+use logging::reqwest_tee_middleware::new_tee_client;
 use logging::parea::{PareaClient, PareaLogCompletion, PareaLogMessage};
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::debug;
@@ -349,7 +350,7 @@ impl AnthropicRequest {
 }
 
 pub struct AnthropicClient {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
     base_url: String,
     chat_endpoint: String,
 }
@@ -357,7 +358,7 @@ pub struct AnthropicClient {
 impl AnthropicClient {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
             base_url: "https://api.anthropic.com".to_owned(),
             chat_endpoint: "/v1/messages".to_owned(),
         }
@@ -365,7 +366,7 @@ impl AnthropicClient {
 
     pub fn new_with_custom_urls(base_url: String, chat_endpoint: String) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
             base_url,
             chat_endpoint,
         }

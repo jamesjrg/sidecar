@@ -6,6 +6,7 @@
 //! Note: we do not store the editor url here since we could have reloaded the editor
 //! and the url changes because of that
 use async_trait::async_trait;
+use logging::reqwest_tee_middleware::new_tee_client;
 use thiserror::Error;
 
 use crate::{
@@ -19,7 +20,7 @@ use crate::{
 };
 
 pub struct LSPDiagnostics {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -182,7 +183,7 @@ impl LSPDiagnosticsOutput {
 impl LSPDiagnostics {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
         }
     }
 }
@@ -215,7 +216,7 @@ impl Tool for LSPDiagnostics {
     // identical to sidecar/src/agentic/tool/lsp/file_diagnostics.rs
     fn tool_input_format(&self) -> String {
         format!(
-            r#"Parameters: 
+            r#"Parameters:
 - fs_file_path: (required) The absolute path of the file to get diagnostics for.
 
 Usage:

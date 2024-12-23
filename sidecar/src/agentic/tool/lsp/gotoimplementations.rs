@@ -8,6 +8,7 @@ use crate::{
     chunking::text_document::{Position, Range},
 };
 use async_trait::async_trait;
+use logging::reqwest_tee_middleware::new_tee_client;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GoToImplementationRequest {
@@ -58,13 +59,13 @@ impl GoToImplementationResponse {
 }
 
 pub struct LSPGoToImplementation {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
 }
 
 impl LSPGoToImplementation {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
         }
     }
 }

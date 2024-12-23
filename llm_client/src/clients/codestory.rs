@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use logging::reqwest_tee_middleware::new_tee_client;
 use async_openai::types::CreateChatCompletionStreamResponse;
 use async_trait::async_trait;
 use eventsource_stream::Eventsource;
@@ -32,7 +32,7 @@ struct Choice {
 }
 
 pub struct CodeStoryClient {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
     api_base: String,
 }
 
@@ -157,11 +157,11 @@ impl CodeStoryClient {
     pub fn new(api_base: &str) -> Self {
         Self {
             api_base: api_base.to_owned(),
-            client: reqwest::Client::new(),
+            client: new_tee_client(),
         }
     }
 
-    pub fn client(&self) -> &reqwest::Client {
+    pub fn client(&self) -> &reqwest_middleware::ClientWithMiddleware {
         &self.client
     }
 
