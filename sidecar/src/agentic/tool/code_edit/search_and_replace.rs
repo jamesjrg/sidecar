@@ -2,6 +2,7 @@
 
 use async_trait::async_trait;
 use futures::{lock::Mutex, StreamExt};
+use logging::new_client;
 use std::path::Path;
 use std::{collections::HashMap, sync::Arc};
 use tokio::io::AsyncWriteExt;
@@ -167,15 +168,16 @@ impl SearchAndReplaceEditingRequest {
 }
 
 pub struct StreamedEditingForEditor {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
 }
 
 impl StreamedEditingForEditor {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: new_client(),
         }
     }
+
 
     pub async fn send_edit_event(
         &self,
@@ -934,7 +936,7 @@ impl Tool for SearchAndReplaceEditing {
                     // update the file directly over here
                     if let Some(parent) = Path::new(&fs_file_path).parent() {
                         tokio::fs::create_dir_all(parent).await?;
-                    }                
+                    }
                     let mut file = tokio::fs::File::create(fs_file_path)
                         .await
                         .map_err(|e| ToolError::IOError(e))?;
