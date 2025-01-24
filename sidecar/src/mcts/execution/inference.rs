@@ -734,7 +734,7 @@ Terminal output: {}"#,
                 let message = format!(
                     r#"Here's the result of running the tests on the following files:
 {}
-                
+
 Test Output from the script (we also have to setup the test runner):
 Exit code: {}
 Output:
@@ -762,6 +762,10 @@ Output:
                         false,
                     )),
                 }
+            },
+            ToolInputPartial::WebSearch(_web_search) => {
+                // TODO: does this actually need an implementation?
+                todo!("web search is not supported with MCTS inference, is this dead code?")
             }
         }
     }

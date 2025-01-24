@@ -1,6 +1,6 @@
 //! Contains the output of a tool which can be used by any of the callers
 
-use crate::agentic::symbol::ui_event::RelevantReference;
+use crate::agentic::{symbol::ui_event::RelevantReference, tool::web_search::types::WebSearchResponse};
 
 use super::{
     code_edit::{
@@ -228,6 +228,8 @@ pub enum ToolOutput {
     FeedbackGeneration(FeedbackGenerationResponse),
     // Semantic search file level response
     SemanticSearch(SemanticSearchResponse),
+    // Web search response
+    WebSearch(WebSearchResponse),
 }
 
 impl ToolOutput {
@@ -439,6 +441,10 @@ impl ToolOutput {
             ToolOutput::EditorApplyChanges(output) => Some(output),
             _ => None,
         }
+    }
+
+    pub fn web_search(response: WebSearchResponse) -> Self {
+        ToolOutput::WebSearch(response)
     }
 
     /// Grabs the output of filter edit operations from the ToolOutput
@@ -893,6 +899,13 @@ impl ToolOutput {
     pub fn get_semantic_search_response(self) -> Option<SemanticSearchResponse> {
         match self {
             ToolOutput::SemanticSearch(response) => Some(response),
+            _ => None,
+        }
+    }
+
+    pub fn get_web_search_response(self) -> Option<WebSearchResponse> {
+        match self {
+            ToolOutput::WebSearch(response) => Some(response),
             _ => None,
         }
     }

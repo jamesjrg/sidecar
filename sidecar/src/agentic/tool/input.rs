@@ -6,8 +6,7 @@ use super::{
         search_and_replace::SearchAndReplaceEditingRequest,
         test_correction::TestOutputCorrectionRequest,
         types::{CodeEdit, CodeEditingPartialRequest},
-    },
-    code_symbol::{
+    }, code_symbol::{
         apply_outline_edit_to_range::ApplyOutlineEditsToRangeRequest,
         correctness::CodeCorrectnessRequest,
         error_fix::CodeEditingErrorRequest,
@@ -30,21 +29,12 @@ use super::{
         reranking_symbols_for_editing_context::ReRankingSnippetsForCodeEditingRequest,
         scratch_pad::ScratchPadAgentInput,
         should_edit::ShouldEditCodeSymbolRequest,
-    },
-    editor::apply::EditorApplyRequest,
-    errors::ToolError,
-    feedback::feedback::FeedbackGenerationRequest,
-    file::{
+    }, editor::apply::EditorApplyRequest, errors::ToolError, feedback::feedback::FeedbackGenerationRequest, file::{
         file_finder::ImportantFilesFinderQuery,
         semantic_search::{SemanticSearchParametersPartial, SemanticSearchRequest},
-    },
-    filtering::broker::{
+    }, filtering::broker::{
         CodeToEditFilterRequest, CodeToEditSymbolRequest, CodeToProbeSubSymbolRequest,
-    },
-    git::{diff_client::GitDiffClientRequest, edited_files::EditedFilesRequest},
-    grep::file::FindInFileRequest,
-    kw_search::tool::KeywordSearchQuery,
-    lsp::{
+    }, git::{diff_client::GitDiffClientRequest, edited_files::EditedFilesRequest}, grep::file::FindInFileRequest, kw_search::tool::KeywordSearchQuery, lsp::{
         create_file::CreateFileRequest,
         diagnostics::LSPDiagnosticsInput,
         file_diagnostics::{FileDiagnosticsInput, WorkspaceDiagnosticsPartial},
@@ -61,26 +51,15 @@ use super::{
         search_file::{SearchFileContentInput, SearchFileContentInputPartial},
         subprocess_spawned_output::SubProcessSpawnedPendingOutputRequest,
         undo_changes::UndoChangesMadeDuringExchangeRequest,
-    },
-    plan::{
+    }, plan::{
         add_steps::PlanAddRequest, generator::StepGeneratorRequest, reasoning::ReasoningRequest,
         updater::PlanUpdateRequest,
-    },
-    r#type::ToolType,
-    ref_filter::ref_filter::ReferenceFilterRequest,
-    repo_map::generator::{RepoMapGeneratorRequest, RepoMapGeneratorRequestPartial},
-    rerank::base::ReRankEntriesForBroker,
-    reward::client::RewardGenerationRequest,
-    search::big_search::BigSearchRequest,
-    session::{
+    }, ref_filter::ref_filter::ReferenceFilterRequest, repo_map::generator::{RepoMapGeneratorRequest, RepoMapGeneratorRequestPartial}, rerank::base::ReRankEntriesForBroker, reward::client::RewardGenerationRequest, search::big_search::BigSearchRequest, session::{
         ask_followup_question::AskFollowupQuestionsRequest,
         attempt_completion::AttemptCompletionClientRequest, chat::SessionChatClientRequest,
         exchange::SessionExchangeNewRequest, hot_streak::SessionHotStreakRequest,
         tool_use_agent::ToolUseAgentReasoningParamsPartial,
-    },
-    swe_bench::test_tool::SWEBenchTestRequest,
-    terminal::terminal::{TerminalInput, TerminalInputPartial},
-    test_runner::runner::{TestRunnerRequest, TestRunnerRequestPartial},
+    }, swe_bench::test_tool::SWEBenchTestRequest, terminal::terminal::{TerminalInput, TerminalInputPartial}, test_runner::runner::{TestRunnerRequest, TestRunnerRequestPartial}, r#type::ToolType, web_search::types::WebSearchRequest,
 };
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -98,6 +77,7 @@ pub enum ToolInputPartial {
     CodeEditorParameters(CodeEditorParameters),
     SemanticSearch(SemanticSearchParametersPartial),
     Reasoning(ToolUseAgentReasoningParamsPartial),
+    WebSearch(WebSearchRequest),
 }
 
 impl ToolInputPartial {
@@ -140,6 +120,7 @@ impl ToolInputPartial {
                 semantic_search_parameters.to_string()
             }
             Self::Reasoning(tool_use_reasoning) => tool_use_reasoning.to_string(),
+            Self::WebSearch(web_search) => web_search.to_string(),
         }
     }
 
@@ -317,6 +298,8 @@ pub enum ToolInput {
     FeedbackGeneration(FeedbackGenerationRequest),
     // Semantic search input
     SemanticSearch(SemanticSearchRequest),
+    // Web search input
+    WebSearch(WebSearchRequest),
 }
 
 impl ToolInput {
@@ -1148,6 +1131,16 @@ impl ToolInput {
             Ok(terminal_command)
         } else {
             Err(ToolError::WrongToolInput(ToolType::TerminalCommand))
+        }
+    }
+
+    pub fn is_web_search(self) -> Result<WebSearchRequest, ToolError> {
+        if let ToolInput::WebSearchRequest(request) = self {
+            Ok(request)
+        } else {
+            Err(ToolError::WrongToolInput(
+                ToolType::WebSearch,
+            ))
         }
     }
 }

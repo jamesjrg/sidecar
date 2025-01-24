@@ -384,7 +384,7 @@ When you produce an output in response to the junior engineer's progress, includ
 {{High-level step-by-step plan}}
 </instruction>
 </plan>
-- This is the updated plan, reflecting the overall strategy and steps to address the user problem. 
+- This is the updated plan, reflecting the overall strategy and steps to address the user problem.
 - Include a brief acknowledgment of completed tasks from previous instructions so they are not repeated.
 
 ### Notes Section (if needed)
@@ -1389,6 +1389,7 @@ enum ToolBlockStatus {
     QuestionFound,
     ResultFound,
     FilePathsFound,
+    WebSearchFound,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -1770,6 +1771,27 @@ impl ToolUseGenerator {
                         self.tool_block_status = ToolBlockStatus::ResultFound;
                     } else if answer_line_at_index == "<fs_file_paths>" {
                         self.tool_block_status = ToolBlockStatus::FilePathsFound;
+                    } else if answer_line_at_index == "<web_search>" {
+                        self.tool_block_status = ToolBlockStatus::NoBlock;
+                        // TODO
+                        // match (
+                        //     self.directory_path.clone(),
+                        //     self.regex_pattern_found.clone(),
+                        // ) {
+                        //     (Some(directory_path), Some(regex_pattern)) => {
+                        //         self.tool_input_partial =
+                        //             Some(ToolInputPartial::SearchFileContentWithRegex(
+                        //                 SearchFileContentInputPartial::new(
+                        //                     directory_path,
+                        //                     regex_pattern,
+                        //                     self.file_pattern.clone(),
+                        //                 ),
+                        //             ));
+                        //         let _ = self.sender.send(ToolBlockEvent::ToolWithParametersFound);
+                        //     }
+                        //     _ => {}
+                        // }
+                        // self.tool_type_possible = None;
                     } else if answer_line_at_index == "</search_files>" {
                         self.tool_block_status = ToolBlockStatus::NoBlock;
                         match (
@@ -1911,6 +1933,7 @@ impl ToolUseGenerator {
                             }
                             _ => {}
                         }
+                    } else if answer_line_at_index == "</web_search>" {
                     }
                 }
                 ToolBlockStatus::FilePathFound => {
@@ -2123,6 +2146,27 @@ impl ToolUseGenerator {
                         }
                     }
                 }
+                ToolBlockStatus::WebSearchFound => {
+                    // self.tool_block_status = ToolBlockStatus::NoBlock;
+                    //     match (
+                    //         self.directory_path.clone(),
+                    //         self.regex_pattern_found.clone(),
+                    //     ) {
+                    //         (Some(directory_path), Some(regex_pattern)) => {
+                    //             self.tool_input_partial =
+                    //                 Some(ToolInputPartial::SearchFileContentWithRegex(
+                    //                     SearchFileContentInputPartial::new(
+                    //                         directory_path,
+                    //                         regex_pattern,
+                    //                         self.file_pattern.clone(),
+                    //                     ),
+                    //                 ));
+                    //             let _ = self.sender.send(ToolBlockEvent::ToolWithParametersFound);
+                    //         }
+                    //         _ => {}
+                    //     }
+                    //     self.tool_type_possible = None;
+                }
             }
         }
     }
@@ -2143,18 +2187,18 @@ mod tests {
     fn test_agent_reasoning_params_parsing() {
         let response = r#"<plan>
 <instruction>
-1. Create a standalone Python script that demonstrates the unexpected behavior of separability_matrix with nested compound models.  
-2. Run the script to confirm that the final matrix for "m.Pix2Sky_TAN() & cm" is not the block diagonal, as suspected.  
-3. Analyze the output and proceed to inspect "astropy/modeling/separable.py" to understand how the separability_matrix is computed.  
-4. Propose and implement a fix in the code.  
-5. Rerun the reproduction script to verify the fix.  
+1. Create a standalone Python script that demonstrates the unexpected behavior of separability_matrix with nested compound models.
+2. Run the script to confirm that the final matrix for "m.Pix2Sky_TAN() & cm" is not the block diagonal, as suspected.
+3. Analyze the output and proceed to inspect "astropy/modeling/separable.py" to understand how the separability_matrix is computed.
+4. Propose and implement a fix in the code.
+5. Rerun the reproduction script to verify the fix.
 6. Confirm that the unexpected behavior is resolved.
 </instruction>
 </plan>
 
 <current_task>
 <instruction>
-1) In the root directory of the “astropy” repository, create a file named “reproduce_separability_issue.py”.  
+1) In the root directory of the “astropy” repository, create a file named “reproduce_separability_issue.py”.
 2) In that file, reproduce the user’s example code demonstrating the nested compound models and how separability_matrix is returning unexpected results:
 --------------------------------------------------------------------------------
 from astropy.modeling import models as m
@@ -2164,7 +2208,7 @@ def main():
     cm = m.Linear1D(10) & m.Linear1D(5)
     print("separability_matrix(cm):")
     print(separability_matrix(cm))
-    
+
     tan_and_cm = m.Pix2Sky_TAN() & cm
     print("\nseparability_matrix(m.Pix2Sky_TAN() & cm):")
     print(separability_matrix(tan_and_cm))
@@ -2172,7 +2216,7 @@ def main():
 if __name__ == "__main__":
     main()
 --------------------------------------------------------------------------------
-3) Save your changes.  
+3) Save your changes.
 4) Run the script (e.g., “python reproduce_separability_issue.py”) in the same directory and capture the output for our reference.
 </instruction>
 </current_task>"#;

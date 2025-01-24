@@ -41,4 +41,5 @@ pub mod session;
 pub mod swe_bench;
 pub mod terminal;
 pub mod test_runner;
+pub mod web_search;
 pub mod r#type;
