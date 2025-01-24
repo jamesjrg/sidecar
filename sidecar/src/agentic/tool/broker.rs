@@ -73,6 +73,7 @@ use super::{
     swe_bench::test_tool::SWEBenchTestTool,
     terminal::terminal::TerminalTool,
     test_runner::runner::TestRunner,
+    web_search::web_search::WebSearchTool,
 };
 
 pub struct ToolBrokerConfiguration {
@@ -483,6 +484,10 @@ impl ToolBroker {
         tools.insert(
             ToolType::SemanticSearch,
             Box::new(SemanticSearch::new(llm_client)),
+        );
+        tools.insert(
+            ToolType::WebSearch,
+            Box::new(WebSearchTool::new()),
         );
         // we also want to add the re-ranking tool here, so we invoke it freely
         Self { tools }

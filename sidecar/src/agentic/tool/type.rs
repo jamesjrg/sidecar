@@ -152,6 +152,8 @@ pub enum ToolType {
     FeedbackGeneration,
     // Code editor tool (this is special for anthropic)
     CodeEditorTool,
+    // Search the web
+    WebSearch,
 }
 
 impl std::fmt::Display for ToolType {

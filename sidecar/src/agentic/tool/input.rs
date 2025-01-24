@@ -81,6 +81,7 @@ use super::{
     swe_bench::test_tool::SWEBenchTestRequest,
     terminal::terminal::{TerminalInput, TerminalInputPartial},
     test_runner::runner::{TestRunnerRequest, TestRunnerRequestPartial},
+    web_search::types::WebSearchRequest,
 };
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -98,6 +99,7 @@ pub enum ToolInputPartial {
     CodeEditorParameters(CodeEditorParameters),
     SemanticSearch(SemanticSearchParametersPartial),
     Reasoning(ToolUseAgentReasoningParamsPartial),
+    WebSearch(WebSearchRequest),
 }
 
 impl ToolInputPartial {
@@ -116,6 +118,7 @@ impl ToolInputPartial {
             Self::CodeEditorParameters(_) => ToolType::CodeEditorTool,
             Self::SemanticSearch(_) => ToolType::SemanticSearch,
             Self::Reasoning(_) => ToolType::Reasoning,
+            Self::WebSearch(_) => ToolType::WebSearch,
         }
     }
 
@@ -140,6 +143,7 @@ impl ToolInputPartial {
                 semantic_search_parameters.to_string()
             }
             Self::Reasoning(tool_use_reasoning) => tool_use_reasoning.to_string(),
+            Self::WebSearch(web_search) => web_search.to_string(),
         }
     }
 
@@ -172,6 +176,7 @@ impl ToolInputPartial {
                 serde_json::to_value(semantic_search_parameters).ok()
             }
             Self::Reasoning(reasoning_input) => serde_json::to_value(reasoning_input).ok(),
+            Self::WebSearch(request) => serde_json::to_value(request).ok(),
         }
     }
 
@@ -188,6 +193,7 @@ impl ToolInputPartial {
             ToolType::RepoMapGeneration => None,
             ToolType::TestRunner => Some(TestRunnerRequestPartial::to_json()),
             ToolType::CodeEditorTool => Some(CodeEditorParameters::to_json()),
+            ToolType::WebSearch => Some(WebSearchRequest::to_json()),
             _ => None,
         }
     }
@@ -317,6 +323,8 @@ pub enum ToolInput {
     FeedbackGeneration(FeedbackGenerationRequest),
     // Semantic search input
     SemanticSearch(SemanticSearchRequest),
+    // Web search input
+    WebSearch(WebSearchRequest),
 }
 
 impl ToolInput {
@@ -406,6 +414,7 @@ impl ToolInput {
             ToolInput::RunTests(_) => ToolType::TestRunner,
             ToolInput::RewardGeneration(_) => ToolType::RewardGeneration,
             ToolInput::FeedbackGeneration(_) => ToolType::FeedbackGeneration,
+            ToolInput::WebSearch(_) => ToolType::WebSearch,
         }
     }
 
@@ -1148,6 +1157,16 @@ impl ToolInput {
             Ok(terminal_command)
         } else {
             Err(ToolError::WrongToolInput(ToolType::TerminalCommand))
+        }
+    }
+
+    pub fn is_web_search(self) -> Result<WebSearchRequest, ToolError> {
+        if let ToolInput::WebSearchRequest(request) = self {
+            Ok(request)
+        } else {
+            Err(ToolError::WrongToolInput(
+                ToolType::WebSearch,
+            ))
         }
     }
 }

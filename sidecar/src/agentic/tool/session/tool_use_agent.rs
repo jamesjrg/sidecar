@@ -327,7 +327,7 @@ Keep refining the plan and giving out tasks to the junior engineer until the use
 
 You MUST run bifbof next repeatedly and follow its instructions. It dequeues a task for you and explains it to you in detail. Don't do anything else first.
 
-You MUST run bifbof next again, even when you think you are done, until it returns a 0 exit code and says that there are no more tasks. 
+You MUST run bifbof next again, even when you think you are done, until it returns a 0 exit code and says that there are no more tasks.
 
 ## Rules to follow:
 - You can not create a new branch on the repository or change the commit of the repository.
@@ -384,7 +384,7 @@ When you produce an output in response to the junior engineer's progress, includ
 {{High-level step-by-step plan}}
 </instruction>
 </plan>
-- This is the updated plan, reflecting the overall strategy and steps to address the user problem. 
+- This is the updated plan, reflecting the overall strategy and steps to address the user problem.
 - Include a brief acknowledgment of completed tasks from previous instructions so they are not repeated.
 
 ### Notes Section (if needed)
@@ -1131,6 +1131,12 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
                             SymbolError::ToolError(ToolError::SerdeConversionFailed)
                         })?,
                     ),
+                    "web_search" => ToolInputPartial::WebSearch(
+                        serde_json::from_str::<WebSearchInputPartial>(&tool_input).map_err(|e| {
+                            println!("web_search::error::{:?}", e);
+                            SymbolError::ToolError(ToolError::SerdeConversionFailed)
+                        })?,
+                    ),
                     _ => {
                         println!("unknow tool found: {}", tool_type);
                         return Err(SymbolError::WrongToolOutput);
@@ -1390,6 +1396,7 @@ enum ToolBlockStatus {
     ResultFound,
     FilePathsFound,
     WaitForExitFound,
+    QueryFound,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -1596,6 +1603,12 @@ impl ToolUseGenerator {
                         let _ = self
                             .sender
                             .send(ToolBlockEvent::ToolFound(ToolType::TestRunner));
+                    } else if answer_line_at_index == "<web_search>" {
+                        self.tool_block_status = ToolBlockStatus::ToolFound;
+                        self.tool_type_possible = Some(ToolType::WebSearch);
+                        let _ = self.sender.send(ToolBlockEvent::ToolFound(
+                            ToolType::WebSearch,
+                        ));
                     }
                 }
                 ToolBlockStatus::ToolFound => {
@@ -1753,6 +1766,8 @@ impl ToolUseGenerator {
                                 ));
                             }
                         }
+                    // TODO maybe web_search <query> also need to handle the single line case?
+                    // maybe this formatting case could be handled generically
                     } else if answer_line_at_index == "<fs_file_path>" {
                         self.tool_block_status = ToolBlockStatus::FilePathFound;
                     } else if answer_line_at_index == "<instruction>" {
@@ -1773,6 +1788,8 @@ impl ToolUseGenerator {
                         self.tool_block_status = ToolBlockStatus::ResultFound;
                     } else if answer_line_at_index == "<fs_file_paths>" {
                         self.tool_block_status = ToolBlockStatus::FilePathsFound;
+                    } else if answer_line_at_index == "<query>" {
+                        self.tool_block_status = ToolBlockStatus::QueryFound;
                     } else if answer_line_at_index == "</search_files>" {
                         self.tool_block_status = ToolBlockStatus::NoBlock;
                         match (
@@ -1932,6 +1949,11 @@ impl ToolUseGenerator {
                             }
                             _ => {}
                         }
+                    } else if answer_line_at_index == "</query>" {
+                        todo!("TODO")
+                    } else if answer_line_at_index == "</web_search>" {
+                        todo!("TODO")
+                        self.tool_block_status = ToolBlockStatus::NoBlock;
                     }
                 }
                 ToolBlockStatus::FilePathFound => {
@@ -2157,6 +2179,8 @@ impl ToolUseGenerator {
                             },
                         ));
                     }
+                ToolBlockStatus::QueryFound => {
+                    todo!("todo")
                 }
             }
         }
@@ -2178,18 +2202,18 @@ mod tests {
     fn test_agent_reasoning_params_parsing() {
         let response = r#"<plan>
 <instruction>
-1. Create a standalone Python script that demonstrates the unexpected behavior of separability_matrix with nested compound models.  
-2. Run the script to confirm that the final matrix for "m.Pix2Sky_TAN() & cm" is not the block diagonal, as suspected.  
-3. Analyze the output and proceed to inspect "astropy/modeling/separable.py" to understand how the separability_matrix is computed.  
-4. Propose and implement a fix in the code.  
-5. Rerun the reproduction script to verify the fix.  
+1. Create a standalone Python script that demonstrates the unexpected behavior of separability_matrix with nested compound models.
+2. Run the script to confirm that the final matrix for "m.Pix2Sky_TAN() & cm" is not the block diagonal, as suspected.
+3. Analyze the output and proceed to inspect "astropy/modeling/separable.py" to understand how the separability_matrix is computed.
+4. Propose and implement a fix in the code.
+5. Rerun the reproduction script to verify the fix.
 6. Confirm that the unexpected behavior is resolved.
 </instruction>
 </plan>
 
 <current_task>
 <instruction>
-1) In the root directory of the “astropy” repository, create a file named “reproduce_separability_issue.py”.  
+1) In the root directory of the “astropy” repository, create a file named “reproduce_separability_issue.py”.
 2) In that file, reproduce the user’s example code demonstrating the nested compound models and how separability_matrix is returning unexpected results:
 --------------------------------------------------------------------------------
 from astropy.modeling import models as m
@@ -2199,7 +2223,7 @@ def main():
     cm = m.Linear1D(10) & m.Linear1D(5)
     print("separability_matrix(cm):")
     print(separability_matrix(cm))
-    
+
     tan_and_cm = m.Pix2Sky_TAN() & cm
     print("\nseparability_matrix(m.Pix2Sky_TAN() & cm):")
     print(separability_matrix(tan_and_cm))
@@ -2207,7 +2231,7 @@ def main():
 if __name__ == "__main__":
     main()
 --------------------------------------------------------------------------------
-3) Save your changes.  
+3) Save your changes.
 4) Run the script (e.g., “python reproduce_separability_issue.py”) in the same directory and capture the output for our reference.
 </instruction>
 </current_task>"#;

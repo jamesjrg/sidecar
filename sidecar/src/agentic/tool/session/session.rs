@@ -2805,6 +2805,53 @@ reason: {}"#,
                     exchange_id.to_owned(),
                 );
             }
+            ToolInputPartial::WebSearch(_web_search) => {
+                todo!("todo!")
+                // let request = SearchFileContentInput::new(
+                //     search_file.directory_path().to_owned(),
+                //     search_file.regex_pattern().to_owned(),
+                //     search_file.file_pattern().map(|s| s.to_owned()),
+                //     message_properties.editor_url(),
+                // );
+                // let input = ToolInput::SearchFileContentWithRegex(request);
+                // let response = tool_box
+                //     .tools()
+                //     .invoke(input)
+                //     .await
+                //     .map_err(|e| SymbolError::ToolError(e))?
+                //     .get_search_file_content_with_regex()
+                //     .ok_or(SymbolError::WrongToolOutput)?;
+
+                // let response = response.response();
+
+                // // we have the tool output over here
+                // if let Some(action_node) = self.action_nodes.last_mut() {
+                //     action_node.add_observation_mut(response.to_owned());
+                //     action_node.set_time_taken_seconds(tool_use_time_taken.elapsed().as_secs_f32());
+                // }
+
+                // // if the cancellation token is set, then we should not update
+                // // our state over here with the broken terminal output
+                // if message_properties.cancellation_token().is_cancelled() {
+                //     return Ok(self);
+                // }
+                // let _ =
+                //     message_properties
+                //         .ui_sender()
+                //         .send(UIEventWithID::tool_output_delta_response(
+                //             message_properties.root_request_id().to_owned(),
+                //             message_properties.request_id_str().to_owned(),
+                //             "".to_owned(),
+                //             response.to_owned(),
+                //         ));
+                // self = self.tool_output(
+                //     &exchange_id,
+                //     tool_type.clone(),
+                //     response.to_owned(),
+                //     UserContext::default(),
+                //     exchange_id.to_owned(),
+                // );
+            }
             ToolInputPartial::CodeEditorParameters(_code_editor_parameters) => {
                 // we do not use this tool via the session.invoke_tool flow at all
             }
