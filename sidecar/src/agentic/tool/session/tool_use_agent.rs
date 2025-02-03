@@ -75,6 +75,7 @@ pub struct ToolUseAgentInput {
     // pass in the messages
     session_messages: Vec<SessionChatMessage>,
     tool_descriptions: Vec<String>,
+    tool_format_reminder: Vec<String>,
     pending_spawned_process_output: Option<String>,
     symbol_event_message_properties: SymbolEventMessageProperties,
 }
@@ -83,12 +84,14 @@ impl ToolUseAgentInput {
     pub fn new(
         session_messages: Vec<SessionChatMessage>,
         tool_descriptions: Vec<String>,
+        tool_format_reminder: Vec<String>,
         pending_spawned_process_output: Option<String>,
         symbol_event_message_properties: SymbolEventMessageProperties,
     ) -> Self {
         Self {
             session_messages,
             tool_descriptions,
+            tool_format_reminder,
             pending_spawned_process_output,
             symbol_event_message_properties,
         }
@@ -575,8 +578,12 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
         input: ToolUseAgentInputOnlyTools,
     ) -> Result<ToolUseAgentOutputWithTools, SymbolError> {
         println!("tool_use_agent::invoke_json_tool_use_prompt");
+
+        // CHANGED <<< (Clone the tools so we can print them AND still pass them to insert_tools)
+        let cloned_tools = input.tools.clone(); // CHANGED <<<
+
         let system_message = LLMClientMessage::system(self.system_message_midwit_json_with_notes())
-            .insert_tools(input.tools);
+            .insert_tools(input.tools); // CHANGED: input.tools is now consumed here
 
         // grab the previous messages as well
         let llm_properties = input
@@ -661,6 +668,19 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
             .chain(previous_messages)
             .collect::<Vec<_>>();
 
+        // CHANGED <<< Print the cloned tools and final messages
+        println!(
+            "{}\n{:#?}",
+            "Tool Use Agent - Available Tools:".bold().blue(),
+            cloned_tools
+        );
+        println!(
+            "{}\n{:#?}",
+            "Tool Use Agent - Final Messages:".bold().green(),
+            final_messages
+        );
+        // CHANGED <<<
+
         let cancellation_token = input.symbol_event_message_properties.cancellation_token();
 
         let (sender, _receiver) = tokio::sync::mpsc::unbounded_channel();
@@ -668,6 +688,12 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
         let response = run_with_cancellation(
             cancellation_token.clone(),
             tokio::spawn(async move {
+                // CHANGED <<< Also log the LLM properties before we call the method
+                println!(
+                    "Invoking stream_completion_with_tool. LLM properties: {:#?}",
+                    llm_properties
+                ); // CHANGED <<<
+
                 if llm_properties.provider().is_anthropic_api_key() {
                     AnthropicClient::new()
                         .stream_completion_with_tool(
@@ -739,6 +765,10 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
         if let Some(Ok(Ok(response))) = response {
             println!("tool_use_agent::invoke_json_tool::reply({:?})", &response);
             // we will have a string here representing the thinking and another with the various tool inputs and their json representation
+            println!(
+                "tool_use_agent::invoke_json_tool::Got a successful response:\n{:#?}",
+                response
+            );
             let thinking = response.0;
             let tool_inputs = response.1;
             let mut tool_inputs_parsed = vec![];
@@ -787,7 +817,7 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
                         })?,
                     ),
                     _ => {
-                        println!("unknow tool found: {}", tool_type);
+                        println!("unknow tool found: {}", tool_type.red());
                         return Err(SymbolError::WrongToolOutput);
                     }
                 };
@@ -982,7 +1012,7 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
                         })?,
                     ),
                     _ => {
-                        println!("unknow tool found: {}", tool_type);
+                        println!("unknown tool found: {}", tool_type.red());
                         return Err(SymbolError::WrongToolOutput);
                     }
                 };
@@ -1038,6 +1068,13 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
                 }
             })
             .collect::<Vec<_>>();
+
+        // Add a reminder about the format of the tools
+        previous_messages.push(LLMClientMessage::user(format!(
+            r#"## Reminder about the format of the tool:
+{}"#,
+            input.tool_format_reminder.join("\n\n")
+        )));
 
         // anthropic allows setting up to 4 cache points, we are going to be more
         // lax here and set 3, since system_messgae takes 1 slot
@@ -1337,8 +1374,14 @@ impl ToolUseGenerator {
 
         for line_number in start_index..=line_number_to_process_until {
             println!(
+                "{}\n{:#?}",
+                "Tool Block Status:".bold().yellow(),
+                &self.tool_block_status
+            );
+            println!(
                 "{:?}::{}",
-                &self.tool_block_status, &stream_lines[line_number]
+                &self.tool_block_status,
+                &stream_lines[line_number].bright_white()
             );
             self.previous_answer_line_number = Some(line_number);
             let answer_line_at_index = stream_lines[line_number];

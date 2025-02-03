@@ -744,6 +744,12 @@ impl Session {
         }
     }
 
+    /// Updates the tools which are present in the session
+    pub fn set_tools(mut self, tools: Vec<ToolType>) -> Self {
+        self.tools = tools;
+        self
+    }
+
     pub fn session_id(&self) -> &str {
         &self.session_id
     }
@@ -1684,6 +1690,10 @@ Terminal output: {}"#,
             ToolInputPartial::TestRunner(_) => {
                 todo!("test runner command is not supported")
             }
+            // TODO: prolly implement before merge
+            ToolInputPartial::DynamicMCPTool(_) => {
+                todo!("dynamic mcp tool is not supported")
+            }
         };
         Ok(())
     }
@@ -1719,6 +1729,11 @@ Terminal output: {}"#,
                 .to_vec()
                 .into_iter()
                 .filter_map(|tool_type| tool_box.tools().get_tool_description(&tool_type))
+                .collect(),
+            self.tools
+                .to_vec()
+                .into_iter()
+                .filter_map(|tool_type| tool_box.tools().get_tool_reminder(&tool_type))
                 .collect(),
             pending_spawned_process_output,
             message_properties.clone(),
@@ -3075,7 +3090,10 @@ Terminal output: {}"#,
             ToolInputPartial::CodeEditorParameters(_code_editor_parameters) => {
                 // we do not use this tool via the session.invoke_tool flow at all
             }
+            _ => {}
+            // TODO: handle MCP tool
         }
+
         Ok(self)
     }
 

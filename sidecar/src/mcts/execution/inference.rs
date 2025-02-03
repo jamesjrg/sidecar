@@ -460,6 +460,7 @@ Always include the <thinking></thinking> section before using the tool."#
                 .into_iter()
                 .filter_map(|tool_type| tool_box.tools().get_tool_description(&tool_type))
                 .collect(),
+            vec![],
             None,
             message_properties.clone(),
         );
@@ -559,6 +560,9 @@ Always include the <thinking></thinking> section before using the tool."#
                     Some(tool_thinking),
                     true,
                 ))
+            }
+            ToolInputPartial::DynamicMCPTool(_) => {
+                todo!("Dynamic MCP tool is not supported with the inference engine")
             }
             ToolInputPartial::CodeEditing(_) => {
                 todo!("code editing is not supported with the inference engine for code editing, use anthropic computer use api instead")
